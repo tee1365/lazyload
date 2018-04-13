@@ -1,0 +1,106 @@
+<!doctype html>
+<html>
+
+<head>
+  <script src="https://code.jquery.com/jquery-3.3.1.js" integrity="sha256-2Kok7MbOyxpgUVvAk/HJ2jigOSYS2auK4Pfzbm7uH60=" crossorigin="anonymous"></script>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      font-family: verdana;
+    }
+
+    .container>li {
+      list-style: none;
+      margin: 20px auto;
+      border: 1px solid #E27272;
+      border-radius: 5px;
+      padding: 20px;
+      width: 400px;
+      text-align: center;
+      color: green;
+      cursor: pointer;
+    }
+
+    .container>li:hover {
+      background: pink;
+    }
+
+    .load {
+      visibility: hidden;
+      margin-bottom: 50px;
+    }
+  </style>
+</head>
+
+<body>
+  <ul class="container">
+  </ul>
+  <div class="load"></div>
+  <script>
+    var isSending = false
+    var cur = 1
+    var len = 3
+
+    lazyload()
+
+    var clock
+
+    $(window).on("scroll", function() {
+      if (clock) {
+        clearTimeout(clock)
+      }
+      clock = setTimeout(function() {
+        lazyload()
+      }, 10)
+    })
+
+    function lazyload() {
+      console.log(isShow($(".load")))
+      if (isShow($(".load"))) {
+        load()
+      }
+    }
+
+    function isShow($node) {
+      var windowHeight = $(window).height();
+      var scrollTop = $(window).scrollTop();
+      var offsetTop = $node.offset().top;
+      if (windowHeight + scrollTop > offsetTop) {
+        return true;
+      } else {
+        return false;
+      }
+    }
+
+
+    function load() {
+      if (isSending) {
+        return
+      }
+      isSending = true;
+      $.get("/loadMore", {
+        idx: cur,
+        len: len
+      }).done(function(data) {
+        data = JSON.parse(data)
+        appendData(data)
+        isSending = false
+        cur += len
+        lazyload()
+      }).fail(function() {
+        console.log("fail")
+      })
+    }
+
+    function appendData(data) {
+      for (var i = 0; i < data.length; i++) {
+        var $node = $("<li>" + data[i] + "</li>")
+        $("ul").append($node)
+      }
+    }
+  </script>
+</body>
+
+</html>
