@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <script src="https://code.jquery.com/jquery-3.3.1.js" integrity="sha256-2Kok7MbOyxpgUVvAk/HJ2jigOSYS2auK4Pfzbm7uH60=" crossorigin="anonymous"></script>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    h1 {
+      margin-top: 20px;
+      text-align: center;
+    }
+
+    .container {
+      width: 800px;
+      margin: 0 auto;
+    }
+
+    li {
+      height: 100px;
+      list-style: none;
+      border: 1px solid #bbb;
+      margin-top: 30px;
+    }
+
+    a {
+      text-decoration: none;
+      color: black;
+    }
+
+    img {
+      height: 100px;
+      width: 150px;
+      float: left;
+    }
+
+    .content {
+      margin-left: 180px;
+      margin-top: 15px;
+      height: 60px;
+
+    }
+
+    .content p {
+      margin-top: 10px;
+      margin-right: 20px;
+      color: #666;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .load {
+      visibility: none;
+      margin-bottom: 50px;
+    }
+  </style>
+</head>
+
+<body>
+  <h1> Explore the World </h1>
+  <ul class="container">
+    <!-- <li>
+      <a href="">
+        <img src="https://images.unsplash.com/photo-1503640538573-148065ba4904?ixlib=rb-0.3.5&ixid=eyJhcHBfaWQiOjEyMDd9&s=07c73b2d07218491dacf8511f3ee79e3&auto=format&fit=crop&w=1050&q=80">
+        <div class="content">
+          <h3>Kyoto</h3>
+          <p>Kyoto is a city located in the central part of the island of Honshu, Japan. It has a population close to 1.5 million.</p>
+        </div>
+      </a>
+    </li> -->
+  </ul>
+  <div class="load"></div>
+  <script>
+    var page = 0
+    var isSending = false
+    var isOver = false
+    var clock
+
+    lazyload()
+
+    $(window).on("scroll", function() {
+      if (clock) {
+        clearTimeout(clock)
+      }
+      clock = setTimeout(function() {
+        lazyload()
+      }, 100)
+    })
+
+    function lazyload() {
+      if (isShow($(".load")) && !isOver) {
+        load()
+      }
+    }
+
+    function isShow($node) {
+      var scrollTop = $(window).scrollTop()
+      var windowHeight = $(window).height()
+      var offsetTop = $(".load").offset().top
+      if (scrollTop + windowHeight > offsetTop) {
+        return true
+      }
+      return false
+    }
+
+    function load() {
+      if (isSending === true) {
+        return
+      }
+      isSending = true
+      $.get("/loadMore", {
+        page: page
+      }).done(function(data) {
+        data = JSON.parse(data)
+        if (data.length === 0) {
+          isOver = true
+          return
+        }
+        appendData(data)
+        page++
+        isSending = false
+        lazyload()
+      }).fail(function() {
+        console.log("fail")
+      })
+    }
+
+    function appendData(data) {
+      var html = ""
+      $.each(data, function() {
+        html += "<li>"
+        html += "<a href='" + this.link + "'>"
+        html += "<img src='" + this.photo + "'>"
+        html += "<div class='content'>"
+        html += "<h3>" + this.region + "</h3>"
+        html += "<p>" + this.description + "</p>"
+        html += "</div>"
+        html += "</a>"
+        html += "</li>"
+      })
+      $(".container").append(html)
+    }
+  </script>
+</body>
+
+</html>
