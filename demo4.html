@@ -1,0 +1,230 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+  <title></title>
+  <meta name="description" content="">
+  <meta name="keywords" content="">
+  <link href="" rel="stylesheet">
+  <script src="https://code.jquery.com/jquery-3.3.1.js" integrity="sha256-2Kok7MbOyxpgUVvAk/HJ2jigOSYS2auK4Pfzbm7uH60=" crossorigin="anonymous"></script>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+
+    .img-preview {
+      width: 1000px;
+      margin: 0 auto;
+    }
+
+    .img-row {
+      margin-bottom: 8px;
+    }
+
+    .img-row:after {
+      content: "";
+      display: block;
+      clear: both;
+    }
+
+    .img-box {
+      float: left;
+      transition: all 1s;
+    }
+
+    .img-row>.img-box:last-child {
+      margin-right: 0;
+    }
+
+    .img-line .img-box:first-child {
+      padding-left: 0;
+    }
+
+    #search {
+      display: block;
+      margin: 20px auto;
+      width: 200px;
+      height: 40px;
+      font-size: 24px;
+    }
+
+    #load {
+      visibility: none;
+      margin-bottom: 100px;
+    }
+  </style>
+</head>
+
+<body>
+  <input id="search" type="text" placeholder="search here!">
+  <div class="img-preview"></div>
+  <div id="load"></div>
+  <script>
+    function Barrel($ct) {
+      this.$ct = $ct
+      this.baseHeight = 200
+      this.$search = $("#search")
+      this.isSending = false
+      this.pageNumber = 1
+      this.init()
+      this.search()
+      this.scroll()
+    }
+
+    Barrel.prototype = {
+
+      init: function() {
+        this.$ct.html("")
+        this.rowList = []
+        this.pageNumber = 1
+        this.lazyload()
+      },
+
+      loadImg: function(hits) {
+        var _this = this
+        // console.log(hits)
+        var urls = []
+        $.each(hits, function(index, hit) {
+          urls.push(hit.webformatURL)
+        })
+        $.each(urls, function(index, url) {
+          var img = new Image()
+          img.src = url
+          img.onload = function() {
+            var ratio = img.width / img.height
+            var imgInfo = {
+              target: $(this),
+              width: _this.baseHeight * ratio,
+              height: _this.baseHeight
+            }
+            _this.render(imgInfo)
+          }
+        })
+      },
+
+      render: function(info) {
+        var rowList = this.rowList
+        var _this = this
+        var lastImgInfo = info
+        var rowWidth = 0
+        var trueHeight = 0
+        var containerWidth = this.$ct.width()
+        rowList.push(info)
+        $.each(rowList, function(index, info) {
+          rowWidth += info.width
+          if (rowWidth > containerWidth) {
+            rowList.pop()
+            rowWidth -= lastImgInfo.width
+            trueHeight = _this.baseHeight * containerWidth / rowWidth
+
+            _this.createRow(trueHeight)
+            _this.rowList = []
+            _this.rowList.push(lastImgInfo)
+          }
+        })
+      },
+
+      createRow: function(trueHeight) {
+        var $row = $("<div class='img-row'></div>")
+        $.each(this.rowList, function(index, info) {
+          var $imgct = $("<div class='img-box'></div>")
+          $img = info.target
+          $img.height(trueHeight)
+          $imgct.append($img)
+          $row.append($imgct)
+        })
+        this.$ct.append($row)
+      },
+
+      getData: function(keyword) {
+        if (this.isSending) {
+          return
+        }
+        this.isSending = true
+        var _this = this
+        var json = {
+          key: "8787206-b30ca37a321979d439eb4d1db",
+          q: keyword,
+          image_type: "photo",
+          per_page: 30,
+          page: this.pageNumber
+        }
+        var url = this.makeUrl(json)
+        $.get(url).done(function(data) {
+          _this.loadImg(data.hits)
+          _this.isSending = false
+        }).fail(function() {
+          console.log(fail)
+        })
+      },
+
+      makeUrl: function(json) {
+        var url = "https://pixabay.com/api/"
+        var jsonArr = []
+        for (key in json) {
+          jsonArr.push(key + "=" + json[key])
+        }
+        var query = jsonArr.join("&")
+        return url + "?" + query
+      },
+
+      search: function() {
+        var _this = this
+        this.$search.on("keyup", _this.throttle(function() {
+          console.log("a")
+          _this.init()
+        }, 800))
+      },
+
+      throttle: function(fn, delay) {
+        var timer
+        return function() {
+          if (timer) {
+            clearTimeout(timer)
+          }
+          timer = setTimeout(function() {
+            fn()
+          }, delay)
+        }
+      },
+
+      lazyload: function() {
+        if (this.isShow("#load")) {
+          this.getData(this.$search.val())
+          this.pageNumber++
+        }
+      },
+
+      isShow: function() {
+        var scrollTop = $(window).scrollTop()
+        var windowHeight = $(window).height()
+        var offsetTop = $("#load").offset().top
+        if (scrollTop + windowHeight > offsetTop) {
+          return true
+        }
+        return false
+      },
+
+      scroll: function() {
+        var _this = this
+        $(window).on("scroll", _this.throttle(function() {
+          console.log("c")
+          _this.lazyload()
+        }, 800))
+      }
+
+    }
+
+    var barrel = new Barrel($(".img-preview"))
+  </script>
+
+
+
+</body>
+
+</html>
