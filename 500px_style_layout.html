@@ -67,22 +67,27 @@
   <script>
     function Barrel($ct) {
       this.$ct = $ct
-      this.baseHeight = 200
-      this.$search = $("#search")
-      this.isSending = false
-      this.pageNumber = 1
-      this.init()
-      this.search()
-      this.scroll()
+      this.start()
     }
 
     Barrel.prototype = {
 
-      init: function() {
+      start: function() {
+        this.baseHeight = 200
+        this.$search = $("#search")
+        this.isSending = false
+        this.pageNumber = 1
+        this.rowList = []
+        this.search()
+        this.scroll()
+        this.loadmore()
+      },
+
+      restart: function() {
         this.$ct.html("")
         this.rowList = []
         this.pageNumber = 1
-        this.lazyload()
+        this.loadmore()
       },
 
       loadImg: function(hits) {
@@ -94,6 +99,7 @@
         })
         $.each(urls, function(index, url) {
           var img = new Image()
+          var $img = $(img)
           img.src = url
           img.onload = function() {
             var ratio = img.width / img.height
@@ -121,7 +127,6 @@
             rowList.pop()
             rowWidth -= lastImgInfo.width
             trueHeight = _this.baseHeight * containerWidth / rowWidth
-
             _this.createRow(trueHeight)
             _this.rowList = []
             _this.rowList.push(lastImgInfo)
@@ -193,17 +198,17 @@
         }
       },
 
-      lazyload: function() {
-        if (this.isShow("#load")) {
+      loadmore: function() {
+        if (this.isShow($("#load"))) {
           this.getData(this.$search.val())
           this.pageNumber++
         }
       },
 
-      isShow: function() {
+      isShow: function($element) {
         var scrollTop = $(window).scrollTop()
         var windowHeight = $(window).height()
-        var offsetTop = $("#load").offset().top
+        var offsetTop = $element.offset().top
         if (scrollTop + windowHeight > offsetTop) {
           return true
         }
@@ -213,8 +218,7 @@
       scroll: function() {
         var _this = this
         $(window).on("scroll", _this.throttle(function() {
-          console.log("c")
-          _this.lazyload()
+          _this.loadmore()
         }, 800))
       }
 
