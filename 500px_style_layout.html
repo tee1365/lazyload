@@ -90,6 +90,55 @@
         this.loadmore()
       },
 
+      loadmore: function() {
+        if (this.isShow($("#load"))) {
+          this.getData(this.$search.val())
+          this.pageNumber++
+        }
+      },
+
+      isShow: function($element) {
+        var scrollTop = $(window).scrollTop()
+        var windowHeight = $(window).height()
+        var offsetTop = $element.offset().top
+        if (scrollTop + windowHeight > offsetTop) {
+          return true
+        }
+        return false
+      },
+
+      getData: function(keyword) {
+        if (this.isSending) {
+          return
+        }
+        this.isSending = true
+        var _this = this
+        var json = {
+          key: "8787206-b30ca37a321979d439eb4d1db",
+          q: keyword,
+          image_type: "photo",
+          per_page: 10,
+          page: this.pageNumber
+        }
+        var url = this.makeUrl(json)
+        $.get(url).done(function(data) {
+          _this.loadImg(data.hits)
+          _this.isSending = false
+        }).fail(function() {
+          console.log(fail)
+        })
+      },
+
+      makeUrl: function(json) {
+        var url = "https://pixabay.com/api/"
+        var jsonArr = []
+        for (key in json) {
+          jsonArr.push(key + "=" + json[key])
+        }
+        var query = jsonArr.join("&")
+        return url + "?" + query
+      },
+
       loadImg: function(hits) {
         var _this = this
         // console.log(hits)
@@ -146,43 +195,11 @@
         this.$ct.append($row)
       },
 
-      getData: function(keyword) {
-        if (this.isSending) {
-          return
-        }
-        this.isSending = true
-        var _this = this
-        var json = {
-          key: "8787206-b30ca37a321979d439eb4d1db",
-          q: keyword,
-          image_type: "photo",
-          per_page: 10,
-          page: this.pageNumber
-        }
-        var url = this.makeUrl(json)
-        $.get(url).done(function(data) {
-          _this.loadImg(data.hits)
-          _this.isSending = false
-        }).fail(function() {
-          console.log(fail)
-        })
-      },
-
-      makeUrl: function(json) {
-        var url = "https://pixabay.com/api/"
-        var jsonArr = []
-        for (key in json) {
-          jsonArr.push(key + "=" + json[key])
-        }
-        var query = jsonArr.join("&")
-        return url + "?" + query
-      },
-
       search: function() {
         var _this = this
         this.$search.on("keyup", _this.throttle(function() {
           console.log("a")
-          _this.init()
+          _this.restart()
         }, 800))
       },
 
@@ -196,23 +213,6 @@
             fn()
           }, delay)
         }
-      },
-
-      loadmore: function() {
-        if (this.isShow($("#load"))) {
-          this.getData(this.$search.val())
-          this.pageNumber++
-        }
-      },
-
-      isShow: function($element) {
-        var scrollTop = $(window).scrollTop()
-        var windowHeight = $(window).height()
-        var offsetTop = $element.offset().top
-        if (scrollTop + windowHeight > offsetTop) {
-          return true
-        }
-        return false
       },
 
       scroll: function() {
